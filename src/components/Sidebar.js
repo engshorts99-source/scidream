@@ -393,6 +393,93 @@ export function createSidebar(container, store) {
   TIER_ORDER.forEach(t => tierOpen[t] = true);
 
   let filterText = '';
+  const nodeOpenState = {}; // Store open state by entity id
+
+  function renderTreeNodes(parentId, depth) {
+    const children = store.getChildren(parentId);
+    if (!children || children.length === 0) return null;
+
+    const lowerFilter = filterText.toLowerCase();
+    
+    const container = document.createElement('div');
+    container.className = 'sd-sidebar__tree-children';
+    container.style.paddingLeft = '16px';
+    if (!nodeOpenState[parentId]) {
+      container.style.display = 'none';
+    }
+
+    children.forEach(child => {
+      // If filtering, we only show if child matches, or if it has matching descendants
+      if (lowerFilter && !child.title.toLowerCase().includes(lowerFilter)) {
+        // Simple filter logic: if child doesn't match, maybe its children do?
+        // For now, simple text filter matches title
+        return; 
+      }
+
+      const itemEl = document.createElement('div');
+      itemEl.className = 'sd-sidebar__item' + (store.selectedId === child.id ? ' sd-sidebar__item--selected' : '');
+      itemEl.dataset.id = child.id;
+      itemEl.draggable = true;
+      itemEl.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', child.id);
+        e.dataTransfer.effectAllowed = 'copyMove';
+      });
+
+      const tierMeta = TIERS[child.tier] || { icon: '•', color: '#c5c6c7' };
+      
+      const hasChildren = store.getChildren(child.id).length > 0;
+      
+      const expandIcon = document.createElement('span');
+      expandIcon.style.width = '12px';
+      expandIcon.style.display = 'inline-block';
+      expandIcon.style.fontSize = '8px';
+      expandIcon.style.color = '#4b5563';
+      expandIcon.style.cursor = 'pointer';
+      expandIcon.style.textAlign = 'center';
+      if (hasChildren) {
+        expandIcon.textContent = nodeOpenState[child.id] ? '▼' : '▶';
+        expandIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          nodeOpenState[child.id] = !nodeOpenState[child.id];
+          render();
+        });
+      }
+      
+      const icon = document.createElement('span');
+      icon.className = 'sd-sidebar__item-icon';
+      icon.textContent = tierMeta.icon;
+      icon.style.color = tierMeta.color;
+
+      const title = document.createElement('span');
+      title.className = 'sd-sidebar__item-title';
+      title.textContent = child.title;
+
+      itemEl.appendChild(expandIcon);
+      itemEl.appendChild(icon);
+      itemEl.appendChild(title);
+
+      itemEl.addEventListener('click', () => {
+        store.select(child.id);
+        render();
+      });
+
+      itemEl.addEventListener('dblclick', () => {
+        if (hasChildren) {
+          nodeOpenState[child.id] = !nodeOpenState[child.id];
+          render();
+        }
+      });
+
+      container.appendChild(itemEl);
+
+      if (hasChildren) {
+        const subTree = renderTreeNodes(child.id, depth + 1);
+        if (subTree) container.appendChild(subTree);
+      }
+    });
+
+    return container;
+  }
 
   function render() {
     while (tree.firstChild) tree.removeChild(tree.firstChild);
@@ -401,12 +488,23 @@ export function createSidebar(container, store) {
 
     TIER_ORDER.forEach(tierKey => {
       const tierMeta = TIERS[tierKey];
-      let items = store.getAllByTier(tierKey);
+      // Get all entities for this tier
+      const allTierItems = store.getAllByTier(tierKey);
+      // ONLY get roots for this tier (no parentId)
+      let rootItems = allTierItems.filter(it => !it.parentId);
 
-      // Filter
       if (lowerFilter) {
-        items = items.filter(it => it.title.toLowerCase().includes(lowerFilter));
+        rootItems = rootItems.filter(it => it.title.toLowerCase().includes(lowerFilter));
       }
+
+      if (rootItems.length === 0 && allTierItems.length > 0) {
+        // If there are no roots for this tier, but there are items (e.g. projects are always children),
+        // we skip rendering them as a top-level group to avoid duplicating the tree.
+        // Wait, if we want to find orphaned nodes we could, but let's assume strict tree.
+        return; 
+      }
+
+      if (rootItems.length === 0) return;
 
       const group = document.createElement('div');
       group.className = 'sd-sidebar__tier-group';
@@ -430,7 +528,7 @@ export function createSidebar(container, store) {
 
       const count = document.createElement('span');
       count.className = 'sd-sidebar__tier-count';
-      count.textContent = items.length;
+      count.textContent = rootItems.length; // Count of roots, or all? Roots is better.
 
       header.appendChild(arrow);
       header.appendChild(icon);
@@ -444,53 +542,71 @@ export function createSidebar(container, store) {
 
       group.appendChild(header);
 
-      // Items
+      // Root Items
       const itemsContainer = document.createElement('div');
       itemsContainer.className = 'sd-sidebar__tier-items' + (!tierOpen[tierKey] ? ' sd-sidebar__tier-items--collapsed' : '');
-      // Set max-height for animation
-      itemsContainer.style.maxHeight = tierOpen[tierKey] ? (items.length * 36 + 10) + 'px' : '0';
+      
+      rootItems.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'sd-sidebar__item' + (store.selectedId === item.id ? ' sd-sidebar__item--selected' : '');
+        itemEl.dataset.id = item.id;
+        itemEl.draggable = true;
+        itemEl.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', item.id);
+          e.dataTransfer.effectAllowed = 'copyMove';
+        });
 
-      items.forEach(entity => {
-        const item = document.createElement('div');
-        item.className = 'sd-sidebar__item';
-        item.id = `sd-sidebar-item-${entity.id}`;
-
-        if (store.selectedId === entity.id) {
-          item.classList.add('sd-sidebar__item--selected');
+        const hasChildren = store.getChildren(item.id).length > 0;
+        
+        const expandIcon = document.createElement('span');
+        expandIcon.style.width = '12px';
+        expandIcon.style.display = 'inline-block';
+        expandIcon.style.fontSize = '8px';
+        expandIcon.style.color = '#4b5563';
+        expandIcon.style.cursor = 'pointer';
+        expandIcon.style.textAlign = 'center';
+        if (hasChildren) {
+          expandIcon.textContent = nodeOpenState[item.id] ? '▼' : '▶';
+          expandIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            nodeOpenState[item.id] = !nodeOpenState[item.id];
+            render();
+          });
         }
-
+        
         const itemIcon = document.createElement('span');
         itemIcon.className = 'sd-sidebar__item-icon';
         itemIcon.textContent = tierMeta.icon;
         itemIcon.style.color = tierMeta.color;
 
-        const itemTitle = document.createElement('span');
-        itemTitle.className = 'sd-sidebar__item-title';
-        itemTitle.textContent = entity.title;
-        itemTitle.title = entity.title;
+        const title = document.createElement('span');
+        title.className = 'sd-sidebar__item-title';
+        title.textContent = item.title;
 
-        item.appendChild(itemIcon);
-        item.appendChild(itemTitle);
+        itemEl.appendChild(expandIcon);
+        itemEl.appendChild(itemIcon);
+        itemEl.appendChild(title);
 
-        if (entity.status) {
-          const statusDot = document.createElement('span');
-          statusDot.className = `sd-sidebar__item-status sd-sidebar__item-status--${entity.status}`;
-          item.appendChild(statusDot);
-        }
-
-        item.addEventListener('click', () => {
-          store.select(entity.id);
-
-          // Also emit custom event
-          container.dispatchEvent(new CustomEvent('entitySelect', {
-            bubbles: true,
-            detail: { id: entity.id, tier: entity.tier },
-          }));
+        itemEl.addEventListener('click', () => {
+          store.select(item.id);
+          render();
         });
 
-        itemsContainer.appendChild(item);
-      });
+        itemEl.addEventListener('dblclick', () => {
+          if (hasChildren) {
+            nodeOpenState[item.id] = !nodeOpenState[item.id];
+            render();
+          }
+        });
 
+        itemsContainer.appendChild(itemEl);
+
+        if (hasChildren) {
+          // Render recursive children
+          const subTree = renderTreeNodes(item.id, 1);
+          if (subTree) itemsContainer.appendChild(subTree);
+        }
+      });
       group.appendChild(itemsContainer);
       tree.appendChild(group);
     });

@@ -419,9 +419,10 @@ export function createFactoryView(container, store) {
               const endX = inRect.left + inRect.width/2 - wrapperRect.left + wrapper.scrollLeft;
               const endY = inRect.top + inRect.height/2 - wrapperRect.top + wrapper.scrollTop;
 
-              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-              const d = `M ${startX} ${startY} C ${startX + 80} ${startY}, ${endX - 80} ${endY}, ${endX} ${endY}`;
+              const midX = startX + (endX - startX) / 2;
+              const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
               
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
               path.setAttribute('d', d);
               path.setAttribute('class', 'conveyor-line');
               svgOverlay.appendChild(path);
@@ -437,68 +438,141 @@ export function createFactoryView(container, store) {
     });
   }
 
+  // Set up Canvas Drag and Drop
+  wrapper.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+
+  wrapper.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const droppedId = e.dataTransfer.getData('text/plain');
+    if (!droppedId) return;
+
+    const sourceEntity = store.getById(droppedId);
+    if (!sourceEntity) return;
+
+    if (!store.selectedId) {
+      alert('Please select a Project or Dream from the Sidebar first to place items.');
+      return;
+    }
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const x = e.clientX - wrapperRect.left + wrapper.scrollLeft;
+    const y = e.clientY - wrapperRect.top + wrapper.scrollTop;
+
+    const activeEntity = store.getById(store.selectedId);
+    let canvasNodes = Array.isArray(activeEntity.canvasNodes) ? [...activeEntity.canvasNodes] : [];
+
+    if (sourceEntity.tier === 'protocol') {
+      // Instantiate a new Action/Experiment
+      const newId = `act-${Date.now().toString().slice(-6)}`;
+      if (window.electronAPI) {
+        await window.electronAPI.createVaultData('experiment', newId, {
+          id: newId,
+          tier: 'experiment',
+          title: sourceEntity.title,
+          parentId: store.selectedId,
+          created: new Date().toISOString().split('T')[0],
+          status: 'planned'
+        });
+        canvasNodes.push({ id: newId, x, y });
+        await window.electronAPI.updateVaultData(activeEntity.tier, activeEntity.id, { canvasNodes });
+      }
+    } else {
+      // Just add the reference (Inventory or existing items)
+      // Check if already in canvas
+      if (!canvasNodes.find(n => n.id === droppedId)) {
+        canvasNodes.push({ id: droppedId, x, y });
+        if (window.electronAPI) {
+          await window.electronAPI.updateVaultData(activeEntity.tier, activeEntity.id, { canvasNodes });
+        }
+      }
+    }
+  });
+
+  let draggedNodeId = null;
+  let dragOffset = { x: 0, y: 0 };
+
+  wrapper.addEventListener('mousedown', (e) => {
+    const header = e.target.closest('.machine-header');
+    if (header) {
+      const block = header.closest('.machine-block');
+      e.preventDefault(); // Prevent text selection
+      draggedNodeId = block.dataset.id;
+      const rect = block.getBoundingClientRect();
+      dragOffset.x = e.clientX - rect.left;
+      dragOffset.y = e.clientY - rect.top;
+      // Bring to front
+      block.style.zIndex = '100';
+    }
+  });
+
+  wrapper.addEventListener('mousemove', (e) => {
+    if (draggedNodeId) {
+      const block = elementsMap.get(draggedNodeId);
+      if (block) {
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const newX = e.clientX - wrapperRect.left + wrapper.scrollLeft - dragOffset.x;
+        const newY = e.clientY - wrapperRect.top + wrapper.scrollTop - dragOffset.y;
+        block.style.left = `${newX}px`;
+        block.style.top = `${newY}px`;
+        drawConnections(); // Redraw lines while moving
+      }
+    }
+  });
+
+  wrapper.addEventListener('mouseup', async (e) => {
+    if (draggedNodeId) {
+      const block = elementsMap.get(draggedNodeId);
+      if (block && store.selectedId) {
+        block.style.zIndex = '';
+        const activeEntity = store.getById(store.selectedId);
+        let canvasNodes = Array.isArray(activeEntity.canvasNodes) ? [...activeEntity.canvasNodes] : [];
+        const nodeObj = canvasNodes.find(n => n.id === draggedNodeId);
+        if (nodeObj) {
+          nodeObj.x = parseInt(block.style.left);
+          nodeObj.y = parseInt(block.style.top);
+          if (window.electronAPI) {
+            await window.electronAPI.updateVaultData(activeEntity.tier, activeEntity.id, { canvasNodes });
+          }
+        }
+      }
+      draggedNodeId = null;
+    }
+  });
+
   function render() {
     gridContainer.innerHTML = '';
     elementsMap.clear();
 
-    const allEntities = Array.from(store.entities.values());
-    const warehouseItems = allEntities.filter(e => e.tier === 'inventory');
-
-    // ── Inventory Warehouse Palette (Sticky Left Side) ──
-    const colWarehouse = document.createElement('div');
-    colWarehouse.className = 'factory-col';
-    colWarehouse.style.width = '240px';
-    colWarehouse.style.flexShrink = '0';
-    colWarehouse.style.background = 'rgba(0,0,0,0.4)';
-    colWarehouse.style.padding = '20px';
-    colWarehouse.style.borderRadius = '8px';
-    colWarehouse.style.border = '1px solid #ffb03b';
-    
-    const whTitle = document.createElement('h2');
-    whTitle.style.color = '#ffb03b';
-    whTitle.style.fontSize = '18px';
-    whTitle.style.marginTop = '0';
-    whTitle.textContent = '📦 WAREHOUSE';
-    colWarehouse.appendChild(whTitle);
-
-    warehouseItems.forEach(item => {
-      // Inventory items are rendered as small mini-blocks to save space
-      const block = renderMachine(item, true);
-      block.style.minWidth = '100%';
-      colWarehouse.appendChild(block);
-    });
-    gridContainer.appendChild(colWarehouse);
-
-    // ── Main Pipeline Area (Selected Hierarchy) ──
-    const colProcessors = document.createElement('div');
-    colProcessors.className = 'factory-col';
-    colProcessors.style.flex = '1';
-    colProcessors.style.alignItems = 'flex-start';
-
-    const procTitle = document.createElement('h2');
-    procTitle.style.color = '#66fcf1';
-    procTitle.style.fontSize = '18px';
-    procTitle.style.marginTop = '0';
-    procTitle.textContent = '⚙️ ACTIVE PIPELINE';
-    colProcessors.appendChild(procTitle);
-
     if (!store.selectedId) {
       const emptyMsg = document.createElement('div');
       emptyMsg.style.color = '#c5c6c7';
-      emptyMsg.textContent = 'Select a Project or Experiment from the Sidebar to view its pipeline.';
-      colProcessors.appendChild(emptyMsg);
-    } else {
-      // Find the topmost ancestor of the selected node that is NOT an inventory item
-      // Wait, let's just render the top root of the selected item.
-      const ancestors = store.getAncestors(store.selectedId);
-      const rootItem = ancestors.length > 0 ? ancestors[ancestors.length - 1] : store.getSelected();
-
-      if (rootItem && rootItem.tier !== 'inventory') {
-        colProcessors.appendChild(renderMachine(rootItem, true));
-      }
+      emptyMsg.style.fontSize = '24px';
+      emptyMsg.style.position = 'absolute';
+      emptyMsg.style.top = '50%';
+      emptyMsg.style.left = '50%';
+      emptyMsg.style.transform = 'translate(-50%, -50%)';
+      emptyMsg.textContent = 'Drag and Drop items from the Sidebar to build your Pipeline.';
+      gridContainer.appendChild(emptyMsg);
+      return;
     }
-    
-    gridContainer.appendChild(colProcessors);
+
+    const activeEntity = store.getById(store.selectedId);
+    const canvasNodes = Array.isArray(activeEntity.canvasNodes) ? activeEntity.canvasNodes : [];
+
+    canvasNodes.forEach(nodeData => {
+      const entity = store.getById(nodeData.id);
+      if (entity) {
+        const block = renderMachine(entity, true);
+        block.style.position = 'absolute';
+        block.style.left = `${nodeData.x}px`;
+        block.style.top = `${nodeData.y}px`;
+        block.style.margin = '0'; // Remove any flex margins
+        gridContainer.appendChild(block);
+      }
+    });
 
     setTimeout(drawConnections, 50);
   }

@@ -4,14 +4,14 @@
  */
 
 export const TIERS = {
-  dream: { color: '#66fcf1', icon: '✦' },
-  project: { color: '#45a29e', icon: '❖' },
-  manuscript: { color: '#c5c6c7', icon: '📝' },
-  figure: { color: '#ffb03b', icon: '📊' },
-  experiment: { color: '#ff0033', icon: '🧪' },
-  protocol: { color: '#34d399', icon: '📋' },
-  inventory: { color: '#ffb03b', icon: '📦' },
-  action: { color: '#c5c6c7', icon: '⚡' }
+  dream: { color: '#66fcf1', icon: '✦', label: 'DREAMS' },
+  project: { color: '#45a29e', icon: '❖', label: 'PROJECTS' },
+  manuscript: { color: '#c5c6c7', icon: '📝', label: 'MANUSCRIPTS' },
+  figure: { color: '#ffb03b', icon: '📊', label: 'FIGURES' },
+  experiment: { color: '#ff0033', icon: '🧪', label: 'EXPERIMENTS' },
+  protocol: { color: '#34d399', icon: '⚙️', label: 'PRESETS (Blueprints)' },
+  inventory: { color: '#ffb03b', icon: '📦', label: 'WAREHOUSE (Materials)' },
+  action: { color: '#c5c6c7', icon: '⚡', label: 'ACTIONS' }
 };
 
 const PREFIX_TIER_MAP = {
