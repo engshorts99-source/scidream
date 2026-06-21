@@ -1,0 +1,824 @@
+/* ═══════════════════════════════════════════════════════════════
+   SCIDREAM v1.4 — Component Library
+   Chamfers · Glows · Buttons · Toggles · Badges · Cards
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   CHAMFERED EDGES
+   45° cut corners — the signature tactical-industrial shape
+   ══════════════════════════════════════════════════════════════ */
+
+.chamfered {
+  clip-path: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 12px
+  );
+}
+
+.chamfered-sm {
+  clip-path: polygon(
+    6px 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    0 calc(100% - 6px),
+    0 6px
+  );
+}
+
+.chamfered-lg {
+  clip-path: polygon(
+    20px 0,
+    calc(100% - 20px) 0,
+    100% 20px,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    20px 100%,
+    0 calc(100% - 20px),
+    0 20px
+  );
+}
+
+/* Top-left + bottom-right only — asymmetric cut */
+.chamfered-tl-br {
+  clip-path: polygon(
+    12px 0,
+    100% 0,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    0 100%,
+    0 12px
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   GLOW EFFECTS
+   ══════════════════════════════════════════════════════════════ */
+
+.glow-cyan {
+  box-shadow: var(--glow-cyan-md);
+}
+
+.glow-cyan-sm {
+  box-shadow: var(--glow-cyan-sm);
+}
+
+.glow-cyan-lg {
+  box-shadow: var(--glow-cyan-lg);
+}
+
+.glow-amber {
+  box-shadow: var(--glow-amber-md);
+}
+
+.glow-amber-sm {
+  box-shadow: var(--glow-amber-sm);
+}
+
+.glow-amber-lg {
+  box-shadow: var(--glow-amber-lg);
+}
+
+.glow-red {
+  box-shadow: var(--glow-red-md);
+}
+
+.glow-red-sm {
+  box-shadow: var(--glow-red-sm);
+}
+
+.glow-red-lg {
+  box-shadow: var(--glow-red-lg);
+}
+
+/* Text glow */
+.text-glow-cyan {
+  text-shadow: var(--glow-cyan-text);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTON — TACTICAL
+   Chamfered edges, cyan accent, premium click feedback
+   ══════════════════════════════════════════════════════════════ */
+
+.btn-tactical {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  min-height: 40px;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--cyan);
+  background: var(--bg-card);
+  border: 1px solid var(--cyan-dark);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 8px
+  );
+}
+
+.btn-tactical::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--cyan-ghost), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.btn-tactical:hover {
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan-md);
+  color: var(--text-bright);
+}
+
+.btn-tactical:hover::before {
+  opacity: 1;
+}
+
+.btn-tactical:active {
+  transform: scale(0.97);
+  box-shadow: var(--glow-cyan-sm);
+  transition-duration: var(--duration-fast);
+}
+
+/* Variant: Amber (Warning actions) */
+.btn-tactical--amber {
+  color: var(--amber);
+  border-color: var(--amber-dark);
+}
+
+.btn-tactical--amber::before {
+  background: linear-gradient(135deg, var(--amber-ghost), transparent 60%);
+}
+
+.btn-tactical--amber:hover {
+  border-color: var(--amber);
+  box-shadow: var(--glow-amber-md);
+}
+
+/* Variant: Red (Destructive actions) */
+.btn-tactical--red {
+  color: var(--red);
+  border-color: var(--red-dark);
+}
+
+.btn-tactical--red::before {
+  background: linear-gradient(135deg, var(--red-ghost), transparent 60%);
+}
+
+.btn-tactical--red:hover {
+  border-color: var(--red);
+  box-shadow: var(--glow-red-md);
+}
+
+/* Variant: Filled */
+.btn-tactical--filled {
+  background: linear-gradient(135deg, var(--cyan-dark), rgba(69, 162, 158, 0.7));
+  color: var(--bg-primary);
+  border-color: var(--cyan);
+  font-weight: var(--weight-bold);
+}
+
+.btn-tactical--filled:hover {
+  background: linear-gradient(135deg, var(--cyan), var(--cyan-dark));
+  box-shadow: var(--glow-cyan-lg);
+}
+
+/* Variant: Ghost */
+.btn-tactical--ghost {
+  background: transparent;
+  border-color: var(--border-subtle);
+  color: var(--text-dim);
+}
+
+.btn-tactical--ghost:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+/* Size: Small */
+.btn-tactical--sm {
+  padding: var(--space-1) var(--space-4);
+  min-height: 30px;
+  font-size: var(--text-xs);
+}
+
+/* Size: Large */
+.btn-tactical--lg {
+  padding: var(--space-3) var(--space-8);
+  min-height: 48px;
+  font-size: var(--text-md);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOGGLE SWITCH
+   Physical power switch with neon light flow on active
+   ══════════════════════════════════════════════════════════════ */
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 52px;
+  height: 28px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.toggle-switch__track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-slow) var(--ease-out);
+  overflow: hidden;
+}
+
+/* Power flow light channel inside track */
+.toggle-switch__track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  width: 200%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--cyan) 40%,
+    var(--cyan) 60%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
+.toggle-switch__thumb {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  background: var(--text-dim);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transform: translateX(3px);
+  transition: all var(--duration-slow) var(--ease-spring);
+  /* Mechanical texture — subtle inner shadow */
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Indicator dot on thumb */
+.toggle-switch__thumb::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--text-ghost);
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+/* ── Active State ──────────────────────────────────────────── */
+.toggle-switch.is-active .toggle-switch__track {
+  background: var(--bg-card);
+  border-color: var(--cyan-dark);
+  box-shadow: var(--glow-cyan-sm);
+}
+
+.toggle-switch.is-active .toggle-switch__track::before {
+  opacity: 1;
+  animation: powerFlowTrack 2s linear infinite;
+}
+
+.toggle-switch.is-active .toggle-switch__thumb {
+  transform: translateX(27px);
+  background: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow:
+    var(--glow-cyan-sm),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.toggle-switch.is-active .toggle-switch__thumb::after {
+  background: var(--bg-primary);
+  box-shadow: 0 0 4px rgba(102, 252, 241, 0.8);
+}
+
+/* Power flow animation for the track */
+@keyframes powerFlowTrack {
+  from { left: -100%; }
+  to   { left: 0%; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   STATUS BADGE
+   State indicator: idle / active / complete / error / warning
+   ══════════════════════════════════════════════════════════════ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  border: 1px solid;
+  clip-path: polygon(
+    4px 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    0 calc(100% - 4px),
+    0 4px
+  );
+}
+
+/* Dot indicator */
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* States */
+.status-badge--idle {
+  color: var(--text-dim);
+  background: var(--bg-secondary);
+  border-color: var(--border-subtle);
+}
+
+.status-badge--idle::before {
+  background: var(--text-ghost);
+}
+
+.status-badge--active {
+  color: var(--cyan);
+  background: var(--cyan-ghost);
+  border-color: var(--cyan-dark);
+}
+
+.status-badge--active::before {
+  background: var(--cyan);
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.status-badge--complete {
+  color: var(--green);
+  background: rgba(0, 255, 136, 0.06);
+  border-color: var(--green-dark);
+}
+
+.status-badge--complete::before {
+  background: var(--green);
+}
+
+.status-badge--error {
+  color: var(--red);
+  background: var(--red-ghost);
+  border-color: var(--red-dark);
+  animation: errorBlink 1.5s ease-in-out infinite;
+}
+
+.status-badge--error::before {
+  background: var(--red);
+}
+
+.status-badge--warning {
+  color: var(--amber);
+  background: var(--amber-ghost);
+  border-color: var(--amber-dark);
+}
+
+.status-badge--warning::before {
+  background: var(--amber);
+  animation: neonPulseAmber 2.5s ease-in-out infinite;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOOLTIP — INVENTORY OVERLAY
+   Dark tooltip with amber accent for inventory hover info
+   ══════════════════════════════════════════════════════════════ */
+
+.tooltip-overlay {
+  position: absolute;
+  z-index: var(--z-tooltip);
+  max-width: 320px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--amber-dark);
+  border-left: 3px solid var(--amber);
+  box-shadow: var(--shadow-lg), var(--glow-amber-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    6px 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    0 calc(100% - 6px),
+    0 6px
+  );
+}
+
+.tooltip-overlay.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.tooltip-overlay__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-2);
+}
+
+.tooltip-overlay__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tooltip-overlay__row:last-child {
+  border-bottom: none;
+}
+
+.tooltip-overlay__label {
+  color: var(--text-dim);
+}
+
+.tooltip-overlay__value {
+  color: var(--text-bright);
+  text-align: right;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   CARD
+   Dark chamfered card with border glow
+   ══════════════════════════════════════════════════════════════ */
+
+.card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-6);
+  transition: all var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 12px
+  );
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 12px,
+    var(--border-default) 40px,
+    var(--border-default) calc(100% - 40px),
+    transparent calc(100% - 12px)
+  );
+}
+
+.card:hover {
+  border-color: var(--border-default);
+}
+
+.card--interactive {
+  cursor: pointer;
+}
+
+.card--interactive:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--glow-cyan-sm);
+  transform: translateY(-1px);
+}
+
+.card--interactive:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-fast);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.card__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semi);
+  color: var(--text-bright);
+  letter-spacing: var(--tracking-wide);
+}
+
+.card__body {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: var(--leading-relaxed);
+}
+
+.card__footer {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SECTION HEADER
+   Uppercase label with cyan underline accent
+   ══════════════════════════════════════════════════════════════ */
+
+.section-header {
+  position: relative;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 48px;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan-sm);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.section-header:hover::after {
+  width: 96px;
+}
+
+/* Variant: Centered */
+.section-header--center {
+  text-align: center;
+}
+
+.section-header--center::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Variant: Full-width underline */
+.section-header--full::after {
+  width: 100%;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA DISPLAY
+   Monospace data readouts
+   ══════════════════════════════════════════════════════════════ */
+
+.data-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--cyan);
+}
+
+.data-label {
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Neon pulse — gentle breathing glow (cyan) */
+@keyframes neonPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 4px rgba(102, 252, 241, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 12px rgba(102, 252, 241, 0.7),
+                0 0 24px rgba(102, 252, 241, 0.3);
+  }
+}
+
+/* Neon pulse — amber variant */
+@keyframes neonPulseAmber {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 4px rgba(255, 176, 59, 0.4);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 12px rgba(255, 176, 59, 0.6),
+                0 0 24px rgba(255, 176, 59, 0.25);
+  }
+}
+
+/* Error blink — urgent red pulsing */
+@keyframes errorBlink {
+  0%, 100% {
+    border-color: var(--red-dark);
+    box-shadow: none;
+  }
+  50% {
+    border-color: var(--red);
+    box-shadow: 0 0 8px rgba(255, 0, 51, 0.35),
+                0 0 20px rgba(255, 0, 51, 0.12);
+  }
+}
+
+/* Power flow — energy line traveling along a path */
+@keyframes powerFlow {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide up with fade */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale in — for modals and popovers */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scan line — sweeping horizontal line */
+@keyframes scanLine {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Rotation — for loading spinners */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ANIMATION UTILITIES
+   ══════════════════════════════════════════════════════════════ */
+
+.animate-fade-in {
+  animation: fadeIn var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--duration-slow) var(--ease-out) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-normal) var(--ease-out) forwards;
+}
+
+.animate-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.animate-error {
+  animation: errorBlink 1.5s ease-in-out infinite;
+}

@@ -1,0 +1,781 @@
+/* ═══════════════════════════════════════════════════════════════
+   SCIDREAM v1.4 — Action View
+   Protocol Pipeline · Action Fragments · Circuit Control Panel
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   PIPELINE CONTAINER
+   Horizontally scrollable protocol execution pipeline
+   ══════════════════════════════════════════════════════════════ */
+
+.action-pipeline {
+  flex: 1;
+  height: calc(100vh - var(--header-height));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-8) var(--space-10);
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Pipeline Header ─────────────────────────────────────────── */
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.pipeline-header__icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--cyan-dark);
+  color: var(--cyan);
+  font-size: var(--text-lg);
+  clip-path: polygon(
+    6px 0, calc(100% - 6px) 0,
+    100% 6px, 100% calc(100% - 6px),
+    calc(100% - 6px) 100%, 6px 100%,
+    0 calc(100% - 6px), 0 6px
+  );
+}
+
+.pipeline-header__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-bright);
+  letter-spacing: var(--tracking-wide);
+}
+
+.pipeline-header__protocol-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-ghost);
+  letter-spacing: var(--tracking-wider);
+}
+
+.pipeline-header__status {
+  margin-left: auto;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ACTION BLOCKS TRACK
+   Horizontal scrolling container for action fragment blocks
+   ══════════════════════════════════════════════════════════════ */
+
+.action-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;  /* Gaps handled by connection lines */
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: var(--space-6) var(--space-4);
+  scroll-snap-type: x proximity;
+  /* Hide scrollbar but allow scrolling */
+  scrollbar-width: none;
+}
+
+.action-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Wrapper for block + connection line */
+.action-track__item {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  animation: slideUp var(--duration-slow) var(--ease-out) backwards;
+}
+
+/* Staggered animation for each block */
+.action-track__item:nth-child(1)  { animation-delay: 0ms;   }
+.action-track__item:nth-child(2)  { animation-delay: 60ms;  }
+.action-track__item:nth-child(3)  { animation-delay: 120ms; }
+.action-track__item:nth-child(4)  { animation-delay: 180ms; }
+.action-track__item:nth-child(5)  { animation-delay: 240ms; }
+.action-track__item:nth-child(6)  { animation-delay: 300ms; }
+.action-track__item:nth-child(7)  { animation-delay: 360ms; }
+.action-track__item:nth-child(8)  { animation-delay: 420ms; }
+.action-track__item:nth-child(9)  { animation-delay: 480ms; }
+.action-track__item:nth-child(10) { animation-delay: 540ms; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   CONNECTION LINES BETWEEN BLOCKS
+   Horizontal lines with animated arrowheads
+   ══════════════════════════════════════════════════════════════ */
+
+.action-connector {
+  display: flex;
+  align-items: center;
+  width: 60px;
+  height: 100%;
+  min-height: 80px;
+  flex-shrink: 0;
+  position: relative;
+  align-self: center;
+}
+
+/* Main connection line */
+.action-connector__line {
+  width: 100%;
+  height: 2px;
+  background: var(--border-default);
+  position: relative;
+  transition: background var(--duration-normal) var(--ease-out);
+}
+
+/* Active flow animation */
+.action-connector--active .action-connector__line {
+  background: var(--cyan-dark);
+  overflow: hidden;
+}
+
+.action-connector--active .action-connector__line::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -60px;
+  width: 30px;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cyan) 50%,
+    transparent
+  );
+  animation: connectorFlow 1.5s linear infinite;
+}
+
+@keyframes connectorFlow {
+  from { left: -60px; }
+  to   { left: 100%;  }
+}
+
+/* Arrowhead at the end */
+.action-connector__arrow {
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--border-default);
+  transition: border-color var(--duration-normal) var(--ease-out);
+}
+
+.action-connector--active .action-connector__arrow {
+  border-left-color: var(--cyan-dark);
+}
+
+/* Error state connector */
+.action-connector--error .action-connector__line {
+  background: var(--red-dark);
+}
+
+.action-connector--error .action-connector__arrow {
+  border-left-color: var(--red-dark);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ACTION FRAGMENT BLOCK
+   The primary unit — chamfered card with 5 sections
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  transition: all var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 12px
+  );
+  position: relative;
+}
+
+.action-block:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--glow-cyan-sm);
+}
+
+/* Block header — step number + name */
+.action-block__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(
+    135deg,
+    rgba(102, 252, 241, 0.04),
+    transparent
+  );
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.action-block__step {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--cyan);
+  background: var(--bg-primary);
+  border: 1px solid var(--cyan-dark);
+  clip-path: polygon(
+    4px 0, calc(100% - 4px) 0,
+    100% 4px, 100% calc(100% - 4px),
+    calc(100% - 4px) 100%, 4px 100%,
+    0 calc(100% - 4px), 0 4px
+  );
+}
+
+.action-block__name {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.action-block__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-ghost);
+  flex-shrink: 0;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.action-block__status-dot--active {
+  background: var(--cyan);
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.action-block__status-dot--complete {
+  background: var(--green);
+}
+
+.action-block__status-dot--error {
+  background: var(--red);
+  animation: errorBlink 1.5s ease-in-out infinite;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   1. INPUT SLOT
+   Previous step output queue — state machine indicator
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block__input-slot {
+  margin: var(--space-3) var(--space-4);
+  padding: var(--space-3);
+  border: 1px dashed var(--border-default);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    6px 0, calc(100% - 6px) 0,
+    100% 6px, 100% calc(100% - 6px),
+    calc(100% - 6px) 100%, 6px 100%,
+    0 calc(100% - 6px), 0 6px
+  );
+}
+
+.action-block__input-slot--empty {
+  border-color: var(--text-ghost);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(107, 110, 112, 0.04) 4px,
+    rgba(107, 110, 112, 0.04) 8px
+  );
+}
+
+.action-block__input-slot--connected {
+  border-color: var(--cyan-dark);
+  border-style: solid;
+  background: var(--cyan-ghost);
+}
+
+.action-block__input-slot--missing {
+  border-color: var(--red);
+  animation: errorBlink 1.5s ease-in-out infinite;
+}
+
+.input-slot__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.input-slot__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--cyan);
+}
+
+/* State machine indicator */
+.input-slot__state {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.input-slot__state-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-ghost);
+}
+
+.input-slot__state-dot.is-current {
+  background: var(--cyan);
+  box-shadow: 0 0 4px rgba(102, 252, 241, 0.6);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   2. RESOURCE AUTO-FETCH PANEL
+   Inventory Object instruction panel — collapsible, amber
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block__resource-panel {
+  margin: 0 var(--space-4);
+  border: 1px solid var(--amber-dark);
+  border-left: 3px solid var(--amber);
+  background: var(--amber-ghost);
+  overflow: hidden;
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+.resource-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.resource-panel__header:hover {
+  background: var(--amber-muted);
+}
+
+.resource-panel__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.resource-panel__chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--amber-dark);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.resource-panel__chevron.is-expanded {
+  transform: rotate(180deg);
+}
+
+.resource-panel__body {
+  padding: 0 var(--space-3);
+  max-height: 0;
+  overflow: hidden;
+  transition: all var(--duration-slow) var(--ease-out);
+}
+
+.resource-panel__body.is-expanded {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  max-height: 200px;
+}
+
+.resource-panel__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+
+.resource-panel__item-icon {
+  color: var(--amber-dark);
+  font-size: 10px;
+}
+
+.resource-panel__item-name {
+  color: var(--amber);
+}
+
+.resource-panel__item-qty {
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   3. VARIABLE CONTROLLER
+   Dark dropdown with cyan border for variable selection
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block__variable-ctrl {
+  margin: var(--space-3) var(--space-4);
+}
+
+.variable-ctrl__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-ghost);
+  margin-bottom: var(--space-1);
+}
+
+.variable-ctrl__select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  padding-right: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  appearance: none;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  clip-path: polygon(
+    4px 0, calc(100% - 4px) 0,
+    100% 4px, 100% calc(100% - 4px),
+    calc(100% - 4px) 100%, 4px 100%,
+    0 calc(100% - 4px), 0 4px
+  );
+  /* Custom chevron */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%2366fcf1' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.variable-ctrl__select:hover {
+  border-color: var(--cyan-dark);
+}
+
+.variable-ctrl__select:focus {
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan-sm);
+}
+
+/* Variable value display */
+.variable-ctrl__value {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--cyan);
+  padding: var(--space-1) var(--space-2);
+  background: var(--cyan-ghost);
+  border-left: 2px solid var(--cyan-dark);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   4. TOGGLE SWITCH AREA
+   Large toggle with neon glow when ON — power control
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block__toggle-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-2);
+}
+
+.toggle-area__label {
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--text-dim);
+  transition: color var(--duration-normal) var(--ease-out);
+}
+
+.toggle-area__label.is-active {
+  color: var(--cyan);
+}
+
+/* Large toggle variant for action blocks */
+.action-block__toggle-area .toggle-switch {
+  width: 58px;
+  height: 30px;
+}
+
+.action-block__toggle-area .toggle-switch__thumb {
+  width: 24px;
+  height: 24px;
+}
+
+.action-block__toggle-area .toggle-switch.is-active .toggle-switch__thumb {
+  transform: translateX(30px);
+}
+
+/* Power indicator text */
+.toggle-area__power-state {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-ghost);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.toggle-area__power-state.is-on {
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(102, 252, 241, 0.4);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   5. ERROR STATE
+   Red border blinking on missing input / validation error
+   ══════════════════════════════════════════════════════════════ */
+
+.action-block--error {
+  border-color: var(--red);
+  animation: blockErrorBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes blockErrorBlink {
+  0%, 100% {
+    border-color: var(--red-dark);
+    box-shadow: none;
+  }
+  50% {
+    border-color: var(--red);
+    box-shadow:
+      0 0 8px rgba(255, 0, 51, 0.25),
+      0 0 20px rgba(255, 0, 51, 0.10),
+      inset 0 0 12px rgba(255, 0, 51, 0.05);
+  }
+}
+
+.action-block--error .action-block__header {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 0, 51, 0.06),
+    transparent
+  );
+}
+
+.action-block--error .action-block__step {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* Error message bar */
+.action-block__error-msg {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--red-ghost);
+  border-top: 1px solid var(--red-dark);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--red);
+}
+
+.action-block__error-msg__icon {
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BLOCK STATE VARIANTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Completed block */
+.action-block--complete {
+  border-color: var(--green-dark);
+  opacity: 0.85;
+}
+
+.action-block--complete .action-block__header {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 136, 0.04),
+    transparent
+  );
+}
+
+.action-block--complete .action-block__step {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* Running / active block */
+.action-block--active {
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan-md);
+}
+
+.action-block--active .action-block__header {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 252, 241, 0.08),
+    transparent
+  );
+}
+
+/* Disabled / locked block */
+.action-block--disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.5);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ADD BLOCK BUTTON
+   ══════════════════════════════════════════════════════════════ */
+
+.action-add-block {
+  width: 60px;
+  height: 120px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border-subtle);
+  background: transparent;
+  color: var(--text-ghost);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  align-self: center;
+  clip-path: polygon(
+    8px 0, calc(100% - 8px) 0,
+    100% 8px, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 8px 100%,
+    0 calc(100% - 8px), 0 8px
+  );
+}
+
+.action-add-block:hover {
+  border-color: var(--cyan-dark);
+  color: var(--cyan);
+  background: var(--cyan-ghost);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PIPELINE FOOTER / OVERVIEW BAR
+   ══════════════════════════════════════════════════════════════ */
+
+.pipeline-overview {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-6);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  clip-path: polygon(
+    6px 0, calc(100% - 6px) 0,
+    100% 6px, 100% calc(100% - 6px),
+    calc(100% - 6px) 100%, 6px 100%,
+    0 calc(100% - 6px), 0 6px
+  );
+}
+
+.pipeline-overview__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-dim);
+}
+
+.pipeline-overview__stat-value {
+  color: var(--cyan);
+  font-weight: var(--weight-bold);
+}
+
+.pipeline-overview__divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+}
+
+.pipeline-overview__progress {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pipeline-overview__progress-bar {
+  width: 120px;
+  height: 4px;
+  background: var(--bg-secondary);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.pipeline-overview__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan-dark), var(--cyan));
+  box-shadow: var(--glow-cyan-sm);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.pipeline-overview__progress-text {
+  color: var(--cyan);
+  min-width: 36px;
+  text-align: right;
+}

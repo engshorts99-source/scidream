@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scidream v1.4</title>
+    <!-- CSS imports -->
+    <link rel="stylesheet" href="/src/styles/variables.css">
+    <link rel="stylesheet" href="/src/styles/base.css">
+    <link rel="stylesheet" href="/src/styles/components.css">
+    <link rel="stylesheet" href="/src/styles/node-view.css">
+    <link rel="stylesheet" href="/src/styles/text-view.css">
+    <link rel="stylesheet" href="/src/styles/action-view.css">
+  </head>
+  <body>
+    <div id="app">
+      <div id="sidebar-container"></div>
+      <div id="main-content">
+        <div id="top-bar">
+           <!-- ViewToggle will be rendered here -->
+        </div>
+        <div id="view-container">
+           <!-- Main views will be rendered here -->
+        </div>
+      </div>
+      <div id="detail-panel-container"></div>
+    </div>
+    <!-- Inventory tooltip overlay -->
+    <div id="inventory-tooltip-container"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
