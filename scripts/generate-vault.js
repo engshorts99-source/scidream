@@ -16,12 +16,12 @@ function ensureDir(dir) {
   ensureDir(path.join(vaultDir, tier));
   if (sampleData[tier]) {
     sampleData[tier].forEach(item => {
-      const { id, title, description, ...rest } = item;
+      const { id, title, description, name, ...rest } = item;
       
       let content = `---\n`;
       content += `id: ${id}\n`;
       if (title) content += `title: "${title.replace(/"/g, '\\"')}"\n`;
-      if (item.name) content += `name: "${item.name.replace(/"/g, '\\"')}"\n`;
+      if (name) content += `name: "${name.replace(/"/g, '\\"')}"\n`;
       
       for (const [key, value] of Object.entries(rest)) {
         if (typeof value === 'object') {

@@ -469,11 +469,99 @@ export function createDetailPanel(container, store) {
       body.appendChild(parentSection);
     }
 
+    // ── Edit Button ──
+    const editBtn = document.createElement('button');
+    editBtn.className = 'sd-detail-panel__close'; // Reusing style but placing next to close
+    editBtn.style.right = '56px';
+    editBtn.style.width = 'auto';
+    editBtn.style.padding = '0 10px';
+    editBtn.textContent = '✎ Edit';
+    
+    let isEditing = false;
+    editBtn.addEventListener('click', async () => {
+      if (!isEditing) {
+        // Enter Edit Mode
+        isEditing = true;
+        editBtn.textContent = '✔ Save';
+        editBtn.style.color = '#34d399';
+        editBtn.style.borderColor = 'rgba(52,211,153,0.3)';
+        editBtn.style.background = 'rgba(52,211,153,0.1)';
+
+        // Title to input
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.value = entity.title;
+        titleInput.className = 'sd-detail-panel__title';
+        titleInput.style.width = '100%';
+        titleInput.style.background = 'rgba(255,255,255,0.05)';
+        titleInput.style.border = '1px solid #45a29e';
+        titleInput.style.color = '#fff';
+        titleInput.id = 'edit-title-input';
+        titleWrap.replaceChild(titleInput, title);
+
+        // Description to textarea
+        const descTextarea = document.createElement('textarea');
+        descTextarea.value = entity.description || '';
+        descTextarea.className = 'sd-detail-panel__desc';
+        descTextarea.style.width = '100%';
+        descTextarea.style.minHeight = '150px';
+        descTextarea.style.background = 'rgba(255,255,255,0.05)';
+        descTextarea.style.border = '1px solid #45a29e';
+        descTextarea.style.color = '#fff';
+        descTextarea.style.fontFamily = 'monospace';
+        descTextarea.style.padding = '8px';
+        descTextarea.id = 'edit-desc-input';
+        
+        const existingDesc = body.querySelector('.sd-detail-panel__desc');
+        if (existingDesc) {
+          existingDesc.replaceWith(descTextarea);
+        } else {
+          const descSection = document.createElement('div');
+          descSection.className = 'sd-detail-panel__section';
+          const descTitle = document.createElement('div');
+          descTitle.className = 'sd-detail-panel__section-title';
+          descTitle.textContent = 'Description';
+          descSection.appendChild(descTitle);
+          descSection.appendChild(descTextarea);
+          body.insertBefore(descSection, body.querySelector('.sd-detail-panel__section:nth-child(2)'));
+        }
+
+      } else {
+        // Save Mode
+        isEditing = false;
+        editBtn.textContent = 'Saving...';
+        
+        const newTitle = document.getElementById('edit-title-input').value;
+        const newDesc = document.getElementById('edit-desc-input').value;
+
+        try {
+          if (window.electronAPI) {
+            await window.electronAPI.updateVaultData(entity.tier, entity.id, {
+              title: newTitle,
+              description: newDesc
+            });
+          }
+        } catch(e) {
+          console.error(e);
+          alert('Save failed');
+        }
+        
+        // Wait for IPC data-updated to re-render, but close edit mode visually
+        editBtn.textContent = '✎ Edit';
+        editBtn.style.color = '#ff0033';
+        editBtn.style.borderColor = 'rgba(255,0,51,0.3)';
+        editBtn.style.background = 'rgba(255,0,51,0.1)';
+      }
+    });
+    panel.appendChild(editBtn);
+
     panel.classList.add('sd-detail-panel--open');
   }
 
   function close() {
     panel.classList.remove('sd-detail-panel--open');
+    const oldEdit = document.querySelector('.sd-detail-panel__close[textContent="✎ Edit"]');
+    if (oldEdit) oldEdit.remove();
   }
 
   // React to store selection

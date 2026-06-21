@@ -5,6 +5,7 @@ import { createViewToggle } from './views/ViewToggle.js';
 import { createNodeView } from './views/NodeView.js';
 import { createTextView } from './views/TextView.js';
 import { createActionView } from './views/ActionView.js';
+import { createBuilderView } from './views/BuilderView.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const sidebarContainer = document.getElementById('sidebar-container');
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nodeView = createNodeView(viewContainer, store);
   const textView = createTextView(viewContainer, store);
   const actionView = createActionView(viewContainer, store);
+  const builderView = createBuilderView(viewContainer, store);
 
   let currentView = 'node';
   let selectedEntityId = null;
@@ -61,6 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       textView.render(selectedEntityId);
     } else if (currentView === 'action') {
       actionView.render(selectedEntityId);
+    } else if (currentView === 'builder') {
+      builderView.render();
     }
     sidebar.render();
     if (selectedEntityId) {

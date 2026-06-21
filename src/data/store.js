@@ -3,7 +3,17 @@
  * Updated for Electron and Local Markdown Vault
  */
 
-// ─── Prefix → Tier name mapping ────────────────────────────────────────────────
+export const TIERS = {
+  dream: { color: '#66fcf1', icon: '✦' },
+  project: { color: '#45a29e', icon: '❖' },
+  manuscript: { color: '#c5c6c7', icon: '📝' },
+  figure: { color: '#ffb03b', icon: '📊' },
+  experiment: { color: '#ff0033', icon: '🧪' },
+  protocol: { color: '#34d399', icon: '📋' },
+  inventory: { color: '#ffb03b', icon: '📦' },
+  action: { color: '#c5c6c7', icon: '⚡' }
+};
+
 const PREFIX_TIER_MAP = {
   'dream': 'dream',
   'proj':  'project',
@@ -42,9 +52,11 @@ function resolveTier(id) {
 let lookupMap = new Map();
 let childrenMap = new Map();
 let rawData = {};
+let edgesArr = [];
 
 function indexEntity(entity) {
   if (!entity || !entity.id) return;
+  entity.tier = resolveTier(entity.id);
   lookupMap.set(entity.id, entity);
 
   if (entity.parentId) {
@@ -52,12 +64,14 @@ function indexEntity(entity) {
       childrenMap.set(entity.parentId, []);
     }
     childrenMap.get(entity.parentId).push(entity.id);
+    edgesArr.push({ source: entity.parentId, target: entity.id });
   }
 }
 
 function buildIndex(data) {
   lookupMap.clear();
   childrenMap.clear();
+  edgesArr = [];
   rawData = data;
 
   ['dreams', 'projects', 'manuscripts', 'figures', 'experiments'].forEach((key) => {
@@ -70,32 +84,62 @@ function buildIndex(data) {
     indexEntity(protocol);
     (protocol.actions || []).forEach((action) => {
       const actionWithParent = { ...action, parentId: protocol.id };
-      lookupMap.set(action.id, actionWithParent);
-      if (!childrenMap.has(protocol.id)) {
-        childrenMap.set(protocol.id, []);
-      }
-      childrenMap.get(protocol.id).push(action.id);
+      indexEntity(actionWithParent);
     });
   });
 }
 
 const store = {
+  selectedId: null,
+  listeners: {},
+
   async init() {
     if (window.electronAPI) {
-      const data = await window.electronAPI.getVaultData();
-      buildIndex(data);
-      
-      // Listen for updates
-      window.electronAPI.onDataUpdated((newData) => {
-        buildIndex(newData);
-        window.dispatchEvent(new CustomEvent('storeUpdated'));
-      });
+      try {
+        const data = await window.electronAPI.getVaultData();
+        buildIndex(data);
+        
+        window.electronAPI.onDataUpdated((newData) => {
+          buildIndex(newData);
+          window.dispatchEvent(new CustomEvent('storeUpdated'));
+          this.emit('select', { entity: this.getSelected() });
+        });
+      } catch (err) {
+        console.error("Failed to parse vault:", err);
+      }
     } else {
       console.warn("Running in browser without Electron API. Vault data won't load.");
     }
   },
 
+  on(event, cb) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(cb);
+  },
+
+  emit(event, payload) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(cb => cb(payload));
+    }
+  },
+
+  select(id) {
+    this.selectedId = id;
+    this.emit('select', { entity: this.getSelected() });
+    
+    // Also dispatch custom event for main.js compatibility
+    const customEvt = new CustomEvent('entitySelect', { detail: { id } });
+    document.getElementById('sidebar-container')?.dispatchEvent(customEvt);
+    document.getElementById('view-container')?.dispatchEvent(customEvt);
+  },
+
+  getSelected() {
+    return this.getById(this.selectedId);
+  },
+
   get raw() { return rawData; },
+  get entities() { return lookupMap; },
+  get edges() { return edgesArr; },
 
   getById(id) { return lookupMap.get(id); },
 
@@ -145,6 +189,8 @@ const store = {
     if (entity && resolveTier(id) === 'inventory') return entity;
     return undefined;
   },
+  
+  getInventoryItem(id) { return this.getInventoryById(id); },
 
   getProtocolById(id) {
     const entity = lookupMap.get(id);

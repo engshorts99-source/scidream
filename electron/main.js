@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const vaultPath = path.join(process.cwd(), 'vault');
-const git = simpleGit(vaultPath);
+const git = simpleGit(process.cwd());
 
 let mainWindow;
 
@@ -27,7 +27,6 @@ function createWindow() {
 
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(process.cwd(), 'dist/index.html'));
   }
@@ -55,7 +54,6 @@ function parseVault() {
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const { data: frontmatter, content } = matter(fileContent);
         
-        // Ensure actions are parsed properly if they are in frontmatter
         let parsedFrontmatter = frontmatter;
         
         data[tier].push({
@@ -72,19 +70,37 @@ function parseVault() {
 app.whenReady().then(() => {
   createWindow();
 
-  // Handle get-vault-data IPC call
   ipcMain.handle('get-vault-data', () => {
     return parseVault();
   });
 
-  // Handle git-sync IPC call
+  ipcMain.handle('update-vault-data', async (event, { tier, id, updates }) => {
+    const filePath = path.join(vaultPath, tier, `${id}.md`);
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const { data: frontmatter, content } = matter(fileContent);
+      
+      const newFrontmatter = { ...frontmatter, ...updates };
+      // Description is often stored as markdown body, handle it specially
+      let newContent = content;
+      if (updates.description !== undefined) {
+        newContent = updates.description + '\n';
+        delete newFrontmatter.description; // Don't save it twice
+      }
+      
+      const newFileContent = matter.stringify(newContent, newFrontmatter);
+      fs.writeFileSync(filePath, newFileContent);
+      return { success: true };
+    }
+    return { success: false, error: 'File not found' };
+  });
+
   ipcMain.handle('git-sync', async () => {
     try {
       const isRepo = await git.checkIsRepo();
       if (!isRepo) {
         await git.init();
       }
-      // Simple sync: add, commit, pull, push
       await git.add('./*');
       const status = await git.status();
       if (status.staged.length > 0) {
