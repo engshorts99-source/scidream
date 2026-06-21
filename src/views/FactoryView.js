@@ -218,18 +218,33 @@ export function createFactoryView(container, store) {
   function toggleNode(entity) {
     store.select(entity.id);
     if (openNodes[entity.parentId] === entity.id) {
+      // Close this node
       delete openNodes[entity.parentId];
+      // Recursively clear open state for all descendants so they are folded when reopened
+      clearOpenState(entity.id);
     } else {
+      // Open this node
       openNodes[entity.parentId] = entity.id;
     }
     render();
   }
 
+  function clearOpenState(parentId) {
+    const children = store.getChildren(parentId);
+    children.forEach(child => {
+      if (openNodes[child.parentId] === child.id) {
+        delete openNodes[child.parentId];
+        clearOpenState(child.id);
+      }
+    });
+  }
+
+  // ... (Title editing and Port mousedown logic remain same)
+  // Let me re-inject the entire chunk cleanly.
   async function handleTitleEdit(entity, newValue) {
     if (newValue && newValue !== entity.title) {
       if (window.electronAPI) {
         await window.electronAPI.updateVaultData(entity.tier, entity.id, { title: newValue });
-        // The store 'data-updated' will fire and re-render
       }
     }
     render();
@@ -237,7 +252,7 @@ export function createFactoryView(container, store) {
 
   function handlePortMousedown(e, entity, type) {
     e.stopPropagation();
-    if (type !== 'output') return; // Only allow drag from output to input
+    if (type !== 'output') return;
     
     dragSourceEntity = entity;
     const rect = e.target.getBoundingClientRect();
@@ -267,7 +282,6 @@ export function createFactoryView(container, store) {
       dragLine.remove();
       dragLine = null;
 
-      // Find if we dropped on an input port
       const targetPort = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
       if (targetPort && targetPort.classList.contains('input')) {
         const targetId = targetPort.dataset.id;
@@ -298,13 +312,11 @@ export function createFactoryView(container, store) {
       block.classList.add('is-open');
     }
 
-    // Input Port
     const inPort = document.createElement('div');
     inPort.className = 'port input';
     inPort.dataset.id = entity.id;
     block.appendChild(inPort);
 
-    // Output Port
     const outPort = document.createElement('div');
     outPort.className = 'port output';
     outPort.dataset.id = entity.id;
@@ -329,7 +341,6 @@ export function createFactoryView(container, store) {
     title.className = 'machine-title';
     title.textContent = entity.title;
     
-    // Inline Edit
     title.addEventListener('dblclick', (e) => {
       e.stopPropagation();
       const input = document.createElement('input');
@@ -359,14 +370,12 @@ export function createFactoryView(container, store) {
     header.appendChild(info);
     block.appendChild(header);
 
-    // Toggle click
     block.addEventListener('click', (e) => {
       if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('port')) {
         toggleNode(entity);
       }
     });
 
-    // Blueprint / children
     if (openNodes[entity.parentId] === entity.id) {
       const children = store.getChildren(entity.id);
       if (children.length > 0) {
@@ -413,12 +422,10 @@ export function createFactoryView(container, store) {
               const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
               const d = `M ${startX} ${startY} C ${startX + 80} ${startY}, ${endX - 80} ${endY}, ${endX} ${endY}`;
               
-              // Base belt
               path.setAttribute('d', d);
               path.setAttribute('class', 'conveyor-line');
               svgOverlay.appendChild(path);
 
-              // Animating layer
               const animPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
               animPath.setAttribute('d', d);
               animPath.setAttribute('class', 'conveyor-belt-anim');
@@ -435,56 +442,64 @@ export function createFactoryView(container, store) {
     elementsMap.clear();
 
     const allEntities = Array.from(store.entities.values());
-    
-    // Group into 3 Columns: Inventory (Warehouse), Processors (Experiments/Protocols), Outputs (Figures/Manuscripts)
     const warehouseItems = allEntities.filter(e => e.tier === 'inventory');
-    const processorItems = allEntities.filter(e => ['experiment', 'protocol', 'project', 'dream'].includes(e.tier));
-    const outputItems = allEntities.filter(e => ['figure', 'manuscript'].includes(e.tier));
 
-    // Warehouse Column
+    // ── Inventory Warehouse Palette (Sticky Left Side) ──
     const colWarehouse = document.createElement('div');
     colWarehouse.className = 'factory-col';
+    colWarehouse.style.width = '240px';
+    colWarehouse.style.flexShrink = '0';
+    colWarehouse.style.background = 'rgba(0,0,0,0.4)';
+    colWarehouse.style.padding = '20px';
+    colWarehouse.style.borderRadius = '8px';
+    colWarehouse.style.border = '1px solid #ffb03b';
+    
     const whTitle = document.createElement('h2');
     whTitle.style.color = '#ffb03b';
-    whTitle.textContent = '📦 WAREHOUSE (Inventory)';
+    whTitle.style.fontSize = '18px';
+    whTitle.style.marginTop = '0';
+    whTitle.textContent = '📦 WAREHOUSE';
     colWarehouse.appendChild(whTitle);
 
     warehouseItems.forEach(item => {
-      colWarehouse.appendChild(renderMachine(item, true));
+      // Inventory items are rendered as small mini-blocks to save space
+      const block = renderMachine(item, true);
+      block.style.minWidth = '100%';
+      colWarehouse.appendChild(block);
     });
     gridContainer.appendChild(colWarehouse);
 
-    // Processors Column
+    // ── Main Pipeline Area (Selected Hierarchy) ──
     const colProcessors = document.createElement('div');
     colProcessors.className = 'factory-col';
+    colProcessors.style.flex = '1';
+    colProcessors.style.alignItems = 'flex-start';
+
     const procTitle = document.createElement('h2');
     procTitle.style.color = '#66fcf1';
-    procTitle.textContent = '⚙️ MACHINES (Experiments & Protocols)';
+    procTitle.style.fontSize = '18px';
+    procTitle.style.marginTop = '0';
+    procTitle.textContent = '⚙️ ACTIVE PIPELINE';
     colProcessors.appendChild(procTitle);
 
-    // Only render top-level processors if they are roots, or let hierarchy render them
-    // For a true DAG, maybe render all that are not children of something else, OR just roots
-    const rootProcessors = processorItems.filter(e => !e.parentId);
-    rootProcessors.forEach(item => {
-      colProcessors.appendChild(renderMachine(item, true));
-    });
+    if (!store.selectedId) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.color = '#c5c6c7';
+      emptyMsg.textContent = 'Select a Project or Experiment from the Sidebar to view its pipeline.';
+      colProcessors.appendChild(emptyMsg);
+    } else {
+      // Find the topmost ancestor of the selected node that is NOT an inventory item
+      // Wait, let's just render the top root of the selected item.
+      const ancestors = store.getAncestors(store.selectedId);
+      const rootItem = ancestors.length > 0 ? ancestors[ancestors.length - 1] : store.getSelected();
+
+      if (rootItem && rootItem.tier !== 'inventory') {
+        colProcessors.appendChild(renderMachine(rootItem, true));
+      }
+    }
+    
     gridContainer.appendChild(colProcessors);
 
-    // Outputs Column
-    const colOutputs = document.createElement('div');
-    colOutputs.className = 'factory-col';
-    const outTitle = document.createElement('h2');
-    outTitle.style.color = '#34d399';
-    outTitle.textContent = '📊 RESULTS (Figures)';
-    colOutputs.appendChild(outTitle);
-
-    const rootOutputs = outputItems.filter(e => !e.parentId);
-    rootOutputs.forEach(item => {
-      colOutputs.appendChild(renderMachine(item, true));
-    });
-    gridContainer.appendChild(colOutputs);
-
-    // Use setTimeout to allow DOM to settle before calculating connection coordinates
     setTimeout(drawConnections, 50);
   }
 
