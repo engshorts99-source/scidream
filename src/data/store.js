@@ -36,7 +36,7 @@ const TIER_COLLECTION_MAP = {
   inventory:  'inventory',
 };
 
-const TIER_ORDER = ['dream', 'project', 'manuscript', 'figure', 'experiment', 'protocol', 'action'];
+const TIER_ORDER = ['dream', 'project', 'manuscript', 'figure', 'experiment', 'protocol', 'inventory', 'action'];
 
 function resolveTier(id) {
   if (!id || typeof id !== 'string') return null;

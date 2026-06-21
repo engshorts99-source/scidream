@@ -1,6 +1,6 @@
 /**
- * Scidream v1.4 — Factory View
- * Factorio-style top-down 2D grid rendering with accordion hierarchy.
+ * Scidream v1.4 — Factory View (DAG)
+ * Factorio-style top-down 2D grid rendering with accordion hierarchy and pipeline connections.
  */
 
 import { TIERS } from '../store/store.js';
@@ -25,74 +25,21 @@ function injectStyles() {
       position: relative;
     }
 
-    .factory-container {
+    .factory-grid {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 150px;
+      min-width: min-content;
+      position: relative;
+      z-index: 2;
+    }
+
+    .factory-col {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       gap: 30px;
-      min-width: min-content;
-    }
-
-    /* Belt connection down */
-    .conveyor-belt {
-      width: 20px;
-      height: 30px;
-      margin: 0 auto;
-      background: #2a303c;
-      border-left: 2px solid #ffb03b;
-      border-right: 2px solid #ffb03b;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Animated arrows on belt */
-    .conveyor-belt::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image: linear-gradient(180deg, 
-        transparent 25%, 
-        rgba(255, 176, 59, 0.4) 25%, 
-        rgba(255, 176, 59, 0.4) 50%, 
-        transparent 50%, 
-        transparent 75%, 
-        rgba(255, 176, 59, 0.4) 75%, 
-        rgba(255, 176, 59, 0.4) 100%);
-      background-size: 100% 20px;
-      animation: moveBelt 1s linear infinite;
-    }
-
-    .conveyor-belt.horizontal {
-      width: 30px;
-      height: 20px;
-      border-top: 2px solid #ffb03b;
-      border-bottom: 2px solid #ffb03b;
-      border-left: none;
-      border-right: none;
-      margin: auto 0;
-    }
-
-    .conveyor-belt.horizontal::after {
-      background-image: linear-gradient(90deg, 
-        transparent 25%, 
-        rgba(255, 176, 59, 0.4) 25%, 
-        rgba(255, 176, 59, 0.4) 50%, 
-        transparent 50%, 
-        transparent 75%, 
-        rgba(255, 176, 59, 0.4) 75%, 
-        rgba(255, 176, 59, 0.4) 100%);
-      background-size: 20px 100%;
-      animation: moveBeltHorizontal 1s linear infinite;
-    }
-
-    @keyframes moveBelt {
-      0% { background-position: 0 0; }
-      100% { background-position: 0 20px; }
-    }
-
-    @keyframes moveBeltHorizontal {
-      0% { background-position: 0 0; }
-      100% { background-position: 20px 0; }
+      align-items: center;
     }
 
     .machine-block {
@@ -105,10 +52,8 @@ function injectStyles() {
       font-family: 'Share Tech Mono', monospace;
       position: relative;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      display: flex;
-      flex-direction: column;
-      min-width: 200px;
+      transition: all 0.3s;
+      min-width: 220px;
     }
 
     .machine-block:hover {
@@ -125,7 +70,6 @@ function injectStyles() {
       display: flex;
       align-items: center;
       gap: 12px;
-      pointer-events: none;
     }
 
     .machine-icon {
@@ -138,6 +82,12 @@ function injectStyles() {
       justify-content: center;
       font-size: 16px;
       border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .machine-info {
+      flex: 1;
+      min-width: 0;
     }
 
     .machine-title {
@@ -146,6 +96,20 @@ function injectStyles() {
       font-weight: 700;
       color: #e5e7eb;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .machine-title-input {
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #66fcf1;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      outline: none;
+      padding: 2px 4px;
     }
 
     .machine-tier {
@@ -155,7 +119,6 @@ function injectStyles() {
       letter-spacing: 1px;
     }
 
-    /* Inner Blueprint area */
     .machine-blueprint {
       margin-top: 20px;
       padding: 20px;
@@ -163,17 +126,68 @@ function injectStyles() {
       border: 1px dashed rgba(102, 252, 241, 0.3);
       border-radius: 4px;
       display: flex;
-      gap: 30px; /* Horizontal layout for children to simulate parallel pipelines */
-      overflow-x: auto;
-      overflow-y: hidden;
-      max-width: 80vw;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    /* Children pipeline container */
-    .pipeline-column {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    /* Ports for Connections */
+    .port {
+      width: 14px;
+      height: 14px;
+      background: #2a303c;
+      border: 2px solid #ffb03b;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      cursor: crosshair;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .port:hover {
+      background: #ffb03b;
+      transform: translateY(-50%) scale(1.3);
+    }
+
+    .port.input {
+      left: -7px;
+    }
+
+    .port.output {
+      right: -7px;
+    }
+
+    /* SVG Overlay for Conveyor Lines */
+    #svg-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .conveyor-line {
+      fill: none;
+      stroke: #45a29e;
+      stroke-width: 12;
+      stroke-linejoin: round;
+      pointer-events: stroke;
+      cursor: pointer;
+    }
+
+    .conveyor-belt-anim {
+      fill: none;
+      stroke: rgba(255, 176, 59, 0.6);
+      stroke-width: 8;
+      stroke-dasharray: 10 10;
+      animation: beltMove 2s linear infinite; /* 2s = 0.5 cycle per second */
+      pointer-events: none;
+    }
+
+    @keyframes beltMove {
+      from { stroke-dashoffset: 40; }
+      to { stroke-dashoffset: 0; }
     }
 
   `;
@@ -186,49 +200,116 @@ export function createFactoryView(container, store) {
   const wrapper = document.createElement('div');
   wrapper.className = 'sd-factory-view';
   
-  const factoryContainer = document.createElement('div');
-  factoryContainer.className = 'factory-container';
-  wrapper.appendChild(factoryContainer);
+  const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgOverlay.id = 'svg-overlay';
+  wrapper.appendChild(svgOverlay);
+
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'factory-grid';
+  wrapper.appendChild(gridContainer);
 
   container.appendChild(wrapper);
 
-  // Keep track of which node is 'open' at each depth/hierarchy level
-  // openNodes[parentId] = childId
-  let openNodes = {};
+  let openNodes = {}; // parentId -> childId
+  let dragLine = null;
+  let dragSourceEntity = null;
+  const elementsMap = new Map(); // id -> DOM element
 
   function toggleNode(entity) {
     store.select(entity.id);
-    
-    // Toggle expand/collapse
     if (openNodes[entity.parentId] === entity.id) {
-      // If already open, close it
       delete openNodes[entity.parentId];
     } else {
-      // Open this, which automatically closes siblings because of the map
       openNodes[entity.parentId] = entity.id;
     }
-    
-    // Also recursively close all children of siblings that just got closed
-    // A simple way is just to clear anything deeper, but map structure naturally orphans them visually.
     render();
   }
 
-  function renderMachine(entity, isRoot = false) {
-    const pipeline = document.createElement('div');
-    pipeline.className = 'pipeline-column';
-
-    // Incoming Belt (if not root)
-    if (!isRoot) {
-      const belt = document.createElement('div');
-      belt.className = 'conveyor-belt';
-      pipeline.appendChild(belt);
+  async function handleTitleEdit(entity, newValue) {
+    if (newValue && newValue !== entity.title) {
+      if (window.electronAPI) {
+        await window.electronAPI.updateVaultData(entity.tier, entity.id, { title: newValue });
+        // The store 'data-updated' will fire and re-render
+      }
     }
+    render();
+  }
 
+  function handlePortMousedown(e, entity, type) {
+    e.stopPropagation();
+    if (type !== 'output') return; // Only allow drag from output to input
+    
+    dragSourceEntity = entity;
+    const rect = e.target.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    
+    const startX = rect.left + rect.width / 2 - wrapperRect.left + wrapper.scrollLeft;
+    const startY = rect.top + rect.height / 2 - wrapperRect.top + wrapper.scrollTop;
+
+    dragLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    dragLine.setAttribute('stroke', '#ffb03b');
+    dragLine.setAttribute('stroke-width', '4');
+    dragLine.setAttribute('fill', 'none');
+    dragLine.setAttribute('stroke-dasharray', '5 5');
+    svgOverlay.appendChild(dragLine);
+
+    const onMove = (moveEvent) => {
+      const endX = moveEvent.clientX - wrapperRect.left + wrapper.scrollLeft;
+      const endY = moveEvent.clientY - wrapperRect.top + wrapper.scrollTop;
+      const d = `M ${startX} ${startY} C ${startX + 100} ${startY}, ${endX - 100} ${endY}, ${endX} ${endY}`;
+      dragLine.setAttribute('d', d);
+    };
+
+    const onUp = async (upEvent) => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      
+      dragLine.remove();
+      dragLine = null;
+
+      // Find if we dropped on an input port
+      const targetPort = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+      if (targetPort && targetPort.classList.contains('input')) {
+        const targetId = targetPort.dataset.id;
+        const targetEntity = store.getById(targetId);
+        
+        if (targetEntity && targetEntity.id !== dragSourceEntity.id) {
+          const newInputs = Array.isArray(targetEntity.inputs) ? [...targetEntity.inputs] : [];
+          if (!newInputs.includes(dragSourceEntity.id)) {
+            newInputs.push(dragSourceEntity.id);
+            if (window.electronAPI) {
+              await window.electronAPI.updateVaultData(targetEntity.tier, targetEntity.id, { inputs: newInputs });
+            }
+          }
+        }
+      }
+      dragSourceEntity = null;
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
+  function renderMachine(entity, isRoot = false) {
     const block = document.createElement('div');
     block.className = 'machine-block';
+    block.dataset.id = entity.id;
     if (openNodes[entity.parentId] === entity.id) {
       block.classList.add('is-open');
     }
+
+    // Input Port
+    const inPort = document.createElement('div');
+    inPort.className = 'port input';
+    inPort.dataset.id = entity.id;
+    block.appendChild(inPort);
+
+    // Output Port
+    const outPort = document.createElement('div');
+    outPort.className = 'port output';
+    outPort.dataset.id = entity.id;
+    outPort.addEventListener('mousedown', (e) => handlePortMousedown(e, entity, 'output'));
+    block.appendChild(outPort);
 
     const header = document.createElement('div');
     header.className = 'machine-header';
@@ -242,10 +323,30 @@ export function createFactoryView(container, store) {
     icon.style.color = tierMeta.color;
     
     const info = document.createElement('div');
+    info.className = 'machine-info';
+    
     const title = document.createElement('div');
     title.className = 'machine-title';
     title.textContent = entity.title;
     
+    // Inline Edit
+    title.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'machine-title-input';
+      input.value = entity.title;
+      
+      input.addEventListener('blur', () => handleTitleEdit(entity, input.value));
+      input.addEventListener('keydown', (ke) => {
+        if (ke.key === 'Enter') handleTitleEdit(entity, input.value);
+        if (ke.key === 'Escape') render();
+      });
+      
+      info.replaceChild(input, title);
+      input.focus();
+    });
+
     const tierLabel = document.createElement('div');
     tierLabel.className = 'machine-tier';
     tierLabel.textContent = entity.tier;
@@ -258,15 +359,14 @@ export function createFactoryView(container, store) {
     header.appendChild(info);
     block.appendChild(header);
 
-    // Event listener
+    // Toggle click
     block.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleNode(entity);
+      if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('port')) {
+        toggleNode(entity);
+      }
     });
 
-    pipeline.appendChild(block);
-
-    // If Open, render children inside a blueprint area appended to the block
+    // Blueprint / children
     if (openNodes[entity.parentId] === entity.id) {
       const children = store.getChildren(entity.id);
       if (children.length > 0) {
@@ -274,46 +374,124 @@ export function createFactoryView(container, store) {
         blueprint.className = 'machine-blueprint';
         
         children.forEach(child => {
-          blueprint.appendChild(renderMachine(child, false));
+          const childBlock = renderMachine(child, false);
+          blueprint.appendChild(childBlock);
         });
 
         block.appendChild(blueprint);
       }
     }
 
-    return pipeline;
+    elementsMap.set(entity.id, block);
+    return block;
+  }
+
+  function drawConnections() {
+    svgOverlay.innerHTML = '';
+    const wrapperRect = wrapper.getBoundingClientRect();
+
+    store.entities.forEach((entity) => {
+      const targetEl = elementsMap.get(entity.id);
+      if (!targetEl) return;
+
+      if (Array.isArray(entity.inputs)) {
+        entity.inputs.forEach((sourceId) => {
+          const sourceEl = elementsMap.get(sourceId);
+          if (sourceEl) {
+            const outPort = sourceEl.querySelector('.port.output');
+            const inPort = targetEl.querySelector('.port.input');
+            
+            if (outPort && inPort) {
+              const outRect = outPort.getBoundingClientRect();
+              const inRect = inPort.getBoundingClientRect();
+
+              const startX = outRect.left + outRect.width/2 - wrapperRect.left + wrapper.scrollLeft;
+              const startY = outRect.top + outRect.height/2 - wrapperRect.top + wrapper.scrollTop;
+              const endX = inRect.left + inRect.width/2 - wrapperRect.left + wrapper.scrollLeft;
+              const endY = inRect.top + inRect.height/2 - wrapperRect.top + wrapper.scrollTop;
+
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              const d = `M ${startX} ${startY} C ${startX + 80} ${startY}, ${endX - 80} ${endY}, ${endX} ${endY}`;
+              
+              // Base belt
+              path.setAttribute('d', d);
+              path.setAttribute('class', 'conveyor-line');
+              svgOverlay.appendChild(path);
+
+              // Animating layer
+              const animPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              animPath.setAttribute('d', d);
+              animPath.setAttribute('class', 'conveyor-belt-anim');
+              svgOverlay.appendChild(animPath);
+            }
+          }
+        });
+      }
+    });
   }
 
   function render() {
-    factoryContainer.innerHTML = '';
-    
-    // Find Roots
+    gridContainer.innerHTML = '';
+    elementsMap.clear();
+
     const allEntities = Array.from(store.entities.values());
-    const roots = allEntities.filter(e => !e.parentId);
+    
+    // Group into 3 Columns: Inventory (Warehouse), Processors (Experiments/Protocols), Outputs (Figures/Manuscripts)
+    const warehouseItems = allEntities.filter(e => e.tier === 'inventory');
+    const processorItems = allEntities.filter(e => ['experiment', 'protocol', 'project', 'dream'].includes(e.tier));
+    const outputItems = allEntities.filter(e => ['figure', 'manuscript'].includes(e.tier));
 
-    if (roots.length === 0) {
-      factoryContainer.innerHTML = '<div style="color:#66fcf1; font-family:monospace;">No items in Vault. Add Entities from the sidebar.</div>';
-      return;
-    }
+    // Warehouse Column
+    const colWarehouse = document.createElement('div');
+    colWarehouse.className = 'factory-col';
+    const whTitle = document.createElement('h2');
+    whTitle.style.color = '#ffb03b';
+    whTitle.textContent = '📦 WAREHOUSE (Inventory)';
+    colWarehouse.appendChild(whTitle);
 
-    // In Factory view, we layout roots horizontally as parallel top-level pipelines
-    const rootsRow = document.createElement('div');
-    rootsRow.style.display = 'flex';
-    rootsRow.style.gap = '40px';
-    rootsRow.style.flexWrap = 'wrap';
-
-    roots.forEach(r => {
-      rootsRow.appendChild(renderMachine(r, true));
+    warehouseItems.forEach(item => {
+      colWarehouse.appendChild(renderMachine(item, true));
     });
+    gridContainer.appendChild(colWarehouse);
 
-    factoryContainer.appendChild(rootsRow);
+    // Processors Column
+    const colProcessors = document.createElement('div');
+    colProcessors.className = 'factory-col';
+    const procTitle = document.createElement('h2');
+    procTitle.style.color = '#66fcf1';
+    procTitle.textContent = '⚙️ MACHINES (Experiments & Protocols)';
+    colProcessors.appendChild(procTitle);
+
+    // Only render top-level processors if they are roots, or let hierarchy render them
+    // For a true DAG, maybe render all that are not children of something else, OR just roots
+    const rootProcessors = processorItems.filter(e => !e.parentId);
+    rootProcessors.forEach(item => {
+      colProcessors.appendChild(renderMachine(item, true));
+    });
+    gridContainer.appendChild(colProcessors);
+
+    // Outputs Column
+    const colOutputs = document.createElement('div');
+    colOutputs.className = 'factory-col';
+    const outTitle = document.createElement('h2');
+    outTitle.style.color = '#34d399';
+    outTitle.textContent = '📊 RESULTS (Figures)';
+    colOutputs.appendChild(outTitle);
+
+    const rootOutputs = outputItems.filter(e => !e.parentId);
+    rootOutputs.forEach(item => {
+      colOutputs.appendChild(renderMachine(item, true));
+    });
+    gridContainer.appendChild(colOutputs);
+
+    // Use setTimeout to allow DOM to settle before calculating connection coordinates
+    setTimeout(drawConnections, 50);
   }
 
   store.on('select', ({ entity }) => {
-    // If selected from outside (e.g. sidebar), ensure it is opened
     if (entity) {
       let curr = entity;
-      while(curr) {
+      while(curr && curr.parentId) {
         openNodes[curr.parentId] = curr.id;
         curr = store.getParent(curr.id);
       }

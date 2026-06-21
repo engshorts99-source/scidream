@@ -432,6 +432,36 @@ export function createDetailPanel(container, store) {
 
       body.appendChild(childSection);
     }
+    
+    // ── Add Child Button ──
+    const addChildBtn = document.createElement('button');
+    addChildBtn.className = 'btn-tactical btn-cyan chamfered-sm';
+    addChildBtn.style.width = '100%';
+    addChildBtn.style.marginTop = '10px';
+    addChildBtn.style.marginBottom = '20px';
+    addChildBtn.textContent = '+ Add Child';
+    addChildBtn.addEventListener('click', () => {
+      import('./AddModal.js').then(({ showAddModal }) => {
+        showAddModal(entity.id, async (data) => {
+          const id = `${data.tier.substring(0,3)}-${Date.now().toString().slice(-6)}`;
+          try {
+            if (window.electronAPI && window.electronAPI.createVaultData) {
+              await window.electronAPI.createVaultData(data.tier, id, {
+                id: id,
+                tier: data.tier,
+                title: data.title,
+                parentId: data.parentId,
+                created: new Date().toISOString().split('T')[0],
+                status: 'planned'
+              });
+            }
+          } catch (e) {
+            alert('Error creating entity: ' + e.message);
+          }
+        });
+      });
+    });
+    body.appendChild(addChildBtn);
 
     // ── Parent link ──
     const parent = store.getParent(entity.id);

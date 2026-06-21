@@ -4,6 +4,7 @@
  */
 
 import { TIERS } from '../store/store.js';
+import { showAddModal } from './AddModal.js';
 
 function injectStyles() {
   if (document.getElementById('sd-sidebar-styles')) return;
@@ -287,7 +288,7 @@ function injectStyles() {
   document.head.appendChild(style);
 }
 
-const TIER_ORDER = ['dream', 'project', 'manuscript', 'figure', 'experiment', 'protocol'];
+const TIER_ORDER = ['dream', 'project', 'manuscript', 'figure', 'experiment', 'protocol', 'inventory'];
 
 /**
  * @param {HTMLElement} container
@@ -363,32 +364,23 @@ export function createSidebar(container, store) {
   addBtn.style.width = '100%';
   addBtn.textContent = '+ Add Entity';
   
-  addBtn.addEventListener('click', async () => {
-    const title = prompt('Enter Entity Title:');
-    if (!title) return;
-    
-    let tier = prompt('Enter Tier (dream, project, manuscript, figure, experiment, protocol, inventory):', 'inventory');
-    if (!tier) return;
-    tier = tier.toLowerCase();
-    
-    const id = `${tier.substring(0,3)}-${Date.now().toString().slice(-6)}`;
-    
-    try {
-      if (window.electronAPI && window.electronAPI.createVaultData) {
-        await window.electronAPI.createVaultData(tier, id, {
-          id: id,
-          tier: tier,
-          title: title,
-          created: new Date().toISOString().split('T')[0],
-          status: 'planned'
-        });
-        alert('Created: ' + id);
-      } else {
-        alert('Electron API not found or createVaultData not implemented.');
+  addBtn.addEventListener('click', () => {
+    showAddModal(null, async (data) => {
+      const id = `${data.tier.substring(0,3)}-${Date.now().toString().slice(-6)}`;
+      try {
+        if (window.electronAPI && window.electronAPI.createVaultData) {
+          await window.electronAPI.createVaultData(data.tier, id, {
+            id: id,
+            tier: data.tier,
+            title: data.title,
+            created: new Date().toISOString().split('T')[0],
+            status: 'planned'
+          });
+        }
+      } catch (e) {
+        alert('Error creating entity: ' + e.message);
       }
-    } catch (e) {
-      alert('Error creating entity: ' + e.message);
-    }
+    });
   });
 
   actionArea.appendChild(addBtn);
