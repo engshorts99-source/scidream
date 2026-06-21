@@ -1,7 +1,6 @@
 ---
 id: inv-tmb
 name: "TMB Substrate Solution"
-name: TMB Substrate Solution
 category: Reagent
 supplier: BD
 catalog: 555214

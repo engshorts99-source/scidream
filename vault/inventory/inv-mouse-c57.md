@@ -1,7 +1,6 @@
 ---
 id: inv-mouse-c57
 name: "C57BL/6J Mouse"
-name: C57BL/6J Mouse
 category: Animal
 supplier: Jackson Lab
 catalog: 000664

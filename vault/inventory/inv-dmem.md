@@ -1,7 +1,6 @@
 ---
 id: inv-dmem
 name: "DMEM High Glucose"
-name: DMEM High Glucose
 category: Media
 supplier: Gibco
 catalog: 11965-092

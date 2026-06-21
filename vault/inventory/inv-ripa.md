@@ -1,7 +1,6 @@
 ---
 id: inv-ripa
 name: "RIPA Lysis Buffer"
-name: RIPA Lysis Buffer
 category: Buffer
 supplier: Thermo
 catalog: 89900

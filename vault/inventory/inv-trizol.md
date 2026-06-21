@@ -1,7 +1,6 @@
 ---
 id: inv-trizol
 name: "TRIzol Reagent"
-name: TRIzol Reagent
 category: Reagent
 supplier: Invitrogen
 catalog: 15596026

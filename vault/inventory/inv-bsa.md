@@ -1,7 +1,6 @@
 ---
 id: inv-bsa
 name: "BSA Fraction V"
-name: BSA Fraction V
 category: Reagent
 supplier: Sigma
 catalog: A7906

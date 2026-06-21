@@ -1,7 +1,6 @@
 ---
 id: inv-sybr-green
 name: "PowerUp SYBR Green Master Mix"
-name: PowerUp SYBR Green Master Mix
 category: Reagent
 supplier: Applied Biosystems
 catalog: A25742

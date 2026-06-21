@@ -1,7 +1,6 @@
 ---
 id: inv-np40
 name: "NP-40 Lysis Buffer"
-name: NP-40 Lysis Buffer
 category: Buffer
 supplier: Thermo
 catalog: FNN0021

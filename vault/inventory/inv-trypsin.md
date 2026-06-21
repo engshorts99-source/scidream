@@ -1,7 +1,6 @@
 ---
 id: inv-trypsin
 name: "Trypsin-EDTA 0.25%"
-name: Trypsin-EDTA 0.25%
 category: Reagent
 supplier: Gibco
 catalog: 25200-056

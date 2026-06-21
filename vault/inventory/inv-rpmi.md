@@ -1,7 +1,6 @@
 ---
 id: inv-rpmi
 name: "RPMI 1640"
-name: RPMI 1640
 category: Media
 supplier: Gibco
 catalog: 11875-093

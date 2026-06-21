@@ -1,7 +1,6 @@
 ---
 id: inv-mcsf
 name: "M-CSF (Recombinant Mouse)"
-name: M-CSF (Recombinant Mouse)
 category: Cytokine
 supplier: PeproTech
 catalog: 315-02

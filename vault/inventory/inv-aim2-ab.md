@@ -1,7 +1,6 @@
 ---
 id: inv-aim2-ab
 name: "AIM2 Antibody (IP grade)"
-name: AIM2 Antibody (IP grade)
 category: Antibody
 supplier: Cell Signaling Technology
 catalog: #63660

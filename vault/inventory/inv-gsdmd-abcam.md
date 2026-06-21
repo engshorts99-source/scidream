@@ -1,7 +1,6 @@
 ---
 id: inv-gsdmd-abcam
 name: "GSDMD Antibody"
-name: GSDMD Antibody
 category: Antibody
 supplier: Abcam
 catalog: ab209845

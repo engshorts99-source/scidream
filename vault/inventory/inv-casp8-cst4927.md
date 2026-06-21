@@ -1,7 +1,6 @@
 ---
 id: inv-casp8-cst4927
 name: "Caspase-8 Antibody"
-name: Caspase-8 Antibody
 category: Antibody
 supplier: Cell Signaling Technology
 catalog: #4927

@@ -1,7 +1,6 @@
 ---
 id: inv-anti-rabbit-hrp
 name: "Anti-Rabbit IgG HRP"
-name: Anti-Rabbit IgG HRP
 category: Antibody
 supplier: Cell Signaling Technology
 catalog: #7074
