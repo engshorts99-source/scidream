@@ -6,11 +6,38 @@ import { createNodeView } from './views/NodeView.js';
 import { createTextView } from './views/TextView.js';
 import { createActionView } from './views/ActionView.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const sidebarContainer = document.getElementById('sidebar-container');
   const topBar = document.getElementById('top-bar');
   const viewContainer = document.getElementById('view-container');
   const detailPanelContainer = document.getElementById('detail-panel-container');
+
+  // Add Git Sync button to topBar
+  const syncBtn = document.createElement('button');
+  syncBtn.className = 'btn-tactical btn-amber chamfered-sm';
+  syncBtn.style.marginRight = '20px';
+  syncBtn.innerHTML = '⟳ GIT SYNC';
+  syncBtn.onclick = async () => {
+    syncBtn.innerHTML = 'SYNCING...';
+    syncBtn.disabled = true;
+    if (window.electronAPI) {
+      const res = await window.electronAPI.gitSync();
+      if (res.success) {
+        syncBtn.innerHTML = '✔ SYNCED';
+      } else {
+        syncBtn.innerHTML = '❌ ERROR';
+        console.error(res.error);
+      }
+    }
+    setTimeout(() => {
+      syncBtn.innerHTML = '⟳ GIT SYNC';
+      syncBtn.disabled = false;
+    }, 2000);
+  };
+  topBar.appendChild(syncBtn);
+
+  // Initialize store asynchronously (Electron IPC)
+  await store.init();
 
   // Initialize components
   const sidebar = createSidebar(sidebarContainer, store);
@@ -35,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (currentView === 'action') {
       actionView.render(selectedEntityId);
     }
+    sidebar.render();
+    if (selectedEntityId) {
+      detailPanel.show(selectedEntityId);
+    }
   }
 
   // Event Listeners
@@ -54,8 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
   viewContainer.addEventListener('entitySelect', (e) => {
     selectedEntityId = e.detail.id;
     detailPanel.show(selectedEntityId);
-    // Sync sidebar selection if needed
-    // sidebar.select(selectedEntityId);
+    updateView();
+  });
+
+  // Re-render when file system updates via Electron watcher
+  window.addEventListener('storeUpdated', () => {
     updateView();
   });
 
