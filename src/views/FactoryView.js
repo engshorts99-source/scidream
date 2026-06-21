@@ -26,12 +26,11 @@ function injectStyles() {
     }
 
     .factory-grid {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      gap: 150px;
-      min-width: min-content;
-      position: relative;
+      width: 5000px;
+      height: 5000px;
+      position: absolute;
+      top: 0;
+      left: 0;
       z-index: 2;
     }
 
