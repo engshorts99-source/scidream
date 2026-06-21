@@ -95,6 +95,19 @@ app.whenReady().then(() => {
     return { success: false, error: 'File not found' };
   });
 
+  ipcMain.handle('create-vault-data', async (event, { tier, id, data }) => {
+    const tierDir = path.join(vaultPath, tier);
+    if (!fs.existsSync(tierDir)) {
+      fs.mkdirSync(tierDir, { recursive: true });
+    }
+    const filePath = path.join(tierDir, `${id}.md`);
+    
+    // Default empty content if not provided
+    const newFileContent = matter.stringify('', data);
+    fs.writeFileSync(filePath, newFileContent);
+    return { success: true, id };
+  });
+
   ipcMain.handle('git-sync', async () => {
     try {
       const isRepo = await git.checkIsRepo();

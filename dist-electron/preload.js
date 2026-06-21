@@ -9,6 +9,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		id,
 		updates
 	}),
+	createVaultData: (tier, id, data) => ipcRenderer.invoke("create-vault-data", {
+		tier,
+		id,
+		data
+	}),
 	onDataUpdated: (callback) => ipcRenderer.on("data-updated", (_event, data) => callback(data)),
 	gitSync: () => ipcRenderer.invoke("git-sync")
 });

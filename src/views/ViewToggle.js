@@ -7,7 +7,7 @@ const VIEWS = [
   { key: 'node',   label: '⬡ Map',    title: 'Node View — 2D Map' },
   { key: 'text',   label: '📄 Text',   title: 'Text View — Document Mode' },
   { key: 'builder',label: '🧩 Builder',title: 'Builder View — Drag & Drop Editor' },
-  { key: 'action', label: '⚡ Action', title: 'Action View — Protocol Bench' },
+  { key: 'factory',label: '🏭 Factory',title: 'Factory View — Industrial Pipeline' },
 ];
 
 function injectStyles() {

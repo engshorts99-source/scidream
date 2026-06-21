@@ -14831,6 +14831,17 @@ app.whenReady().then(() => {
 			error: "File not found"
 		};
 	});
+	ipcMain.handle("create-vault-data", async (event, { tier, id, data }) => {
+		const tierDir = path.join(vaultPath, tier);
+		if (!fs.existsSync(tierDir)) fs.mkdirSync(tierDir, { recursive: true });
+		const filePath = path.join(tierDir, `${id}.md`);
+		const newFileContent = import_gray_matter.default.stringify("", data);
+		fs.writeFileSync(filePath, newFileContent);
+		return {
+			success: true,
+			id
+		};
+	});
 	ipcMain.handle("git-sync", async () => {
 		try {
 			if (!await git.checkIsRepo()) await git.init();

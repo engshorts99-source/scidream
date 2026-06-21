@@ -4,7 +4,7 @@ import { createDetailPanel } from './components/DetailPanel.js';
 import { createViewToggle } from './views/ViewToggle.js';
 import { createNodeView } from './views/NodeView.js';
 import { createTextView } from './views/TextView.js';
-import { createActionView } from './views/ActionView.js';
+import { createFactoryView } from './views/FactoryView.js';
 import { createBuilderView } from './views/BuilderView.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize views
   const nodeView = createNodeView(viewContainer, store);
   const textView = createTextView(viewContainer, store);
-  const actionView = createActionView(viewContainer, store);
+  const factoryView = createFactoryView(viewContainer, store);
   const builderView = createBuilderView(viewContainer, store);
 
   let currentView = 'node';
@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       nodeView.render(selectedEntityId);
     } else if (currentView === 'text') {
       textView.render(selectedEntityId);
-    } else if (currentView === 'action') {
-      actionView.render(selectedEntityId);
+    } else if (currentView === 'factory') {
+      factoryView.render();
     } else if (currentView === 'builder') {
       builderView.render();
     }

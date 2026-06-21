@@ -353,6 +353,47 @@ export function createSidebar(container, store) {
   tree.id = 'sd-sidebar-tree';
   sidebar.appendChild(tree);
 
+  // Bottom Action Area
+  const actionArea = document.createElement('div');
+  actionArea.style.padding = '20px';
+  actionArea.style.borderTop = '1px solid rgba(102, 252, 241, 0.1)';
+  
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn-tactical btn-cyan chamfered-sm';
+  addBtn.style.width = '100%';
+  addBtn.textContent = '+ Add Entity';
+  
+  addBtn.addEventListener('click', async () => {
+    const title = prompt('Enter Entity Title:');
+    if (!title) return;
+    
+    let tier = prompt('Enter Tier (dream, project, manuscript, figure, experiment, protocol, inventory):', 'inventory');
+    if (!tier) return;
+    tier = tier.toLowerCase();
+    
+    const id = `${tier.substring(0,3)}-${Date.now().toString().slice(-6)}`;
+    
+    try {
+      if (window.electronAPI && window.electronAPI.createVaultData) {
+        await window.electronAPI.createVaultData(tier, id, {
+          id: id,
+          tier: tier,
+          title: title,
+          created: new Date().toISOString().split('T')[0],
+          status: 'planned'
+        });
+        alert('Created: ' + id);
+      } else {
+        alert('Electron API not found or createVaultData not implemented.');
+      }
+    } catch (e) {
+      alert('Error creating entity: ' + e.message);
+    }
+  });
+
+  actionArea.appendChild(addBtn);
+  sidebar.appendChild(actionArea);
+
   container.appendChild(sidebar);
 
   // State
